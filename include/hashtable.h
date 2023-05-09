@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 typedef struct ht_entry{
     char *key;
@@ -18,14 +19,13 @@ typedef struct htable{
 }HTable;
 
 
+uint32_t ht_hash(char *key);
 
-char *ht_search(char **table, char *key);
-
-int ht_getID(char *key);
-
-HTable *ht_createTable(size_t size);
+HT_entry *ht_search(HTable *table, char *key);
 
 HT_entry *ht_createEntry(char *key, char *val);
+
+HTable *ht_createTable(size_t size);
 
 void ht_freeEntry(HT_entry *entry);
 

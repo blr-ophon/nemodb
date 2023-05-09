@@ -1,13 +1,42 @@
 #include "hashtable.h"
 
 #define TABLE_SIZE 64
+#define MAX_NAME 128
 
-int ht_getID(char *key){
+int main(void){
+    HTable *table = ht_createTable(64);
+    ht_freeTable(table);
+    printf("joao => %u\n", ht_hash("joao"));
+    printf("corno => %u\n", ht_hash("corno"));
+    printf("maria => %u\n", ht_hash("maria"));
+    printf("gorda => %u\n", ht_hash("gorda"));
+    printf("Jacob => %u\n", ht_hash("Jacob"));
     return 0;
 }
 
-char *ht_search(char **table, char *key){
-    return table[ht_getID(key)];
+void ht_insert(HTable *table, char *key, char *val){
+    table->entries[ht_hash(key)] = ht_createEntry(key,val);
+}
+
+void ht_delete(HTable *table, char *key){
+    HT_entry *entry = ht_search(table, key);
+    ht_freeEntry(entry);
+    table->entries[ht_hash(key)]->key = NULL;
+    table->entries[ht_hash(key)]->val = NULL;
+}
+
+uint32_t ht_hash(char *key){
+    int len = strnlen(key, MAX_NAME);
+    uint32_t hash = 0;
+    for(int i = 0; i < len; i++){
+        //hash_value += key[i];
+        hash = (64*hash + key[i]) % TABLE_SIZE;
+    }
+    return hash;
+}
+
+HT_entry *ht_search(HTable *table, char *key){
+    return table->entries[ht_hash(key)];
 }
 
 HT_entry *ht_createEntry(char *key, char *val){
@@ -44,8 +73,3 @@ void ht_freeTable(HTable *table){
     free(table);
 }
 
-int main(void){
-    HTable *table = ht_createTable(64);
-    ht_freeTable(table);
-    return 0;
-}
