@@ -25,13 +25,15 @@ uint32_t ht_djb2(char *key, uint32_t table_size);
 
 uint32_t ht_hash(char *key, int attempts, size_t table_size);
 
-//search/insert/delete
+//search/insert/delete/print
 
 HT_entry *ht_search(HTable *table, char *key);
 
 void ht_insert(HTable *table, char *key, char *val);
 
 void ht_delete(HTable *table, char *key);
+
+void ht_printTable(HTable *table);
 
 //Create/free
 

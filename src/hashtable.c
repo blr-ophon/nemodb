@@ -2,15 +2,35 @@
 
 #define MAX_NAME 128
 
-int main(void){
-    HTable *table = ht_createTable(64);
-    printf("joao => %u\n", ht_djb2("joao", table->size));
-    printf("corno => %u\n", ht_djb2("corno", table->size));
-    printf("maria => %u\n", ht_djb2("maria", table->size));
-    printf("gorda => %u\n", ht_djb2("gorda", table->size));
-    printf("Jacob => %u\n", ht_djb2("Jacob", table->size));
-    ht_freeTable(table);
-    return 0;
+//int main(void){
+//    HTable *table = ht_createTable(64);
+//    printf("joao => %u\n", ht_djb2("joao", table->size));
+//    printf("corno => %u\n", ht_djb2("corno", table->size));
+//    printf("maria => %u\n", ht_djb2("maria", table->size));
+//    printf("gorda => %u\n", ht_djb2("gorda", table->size));
+//    printf("Jacob => %u\n", ht_djb2("Jacob", table->size));
+//
+//    ht_insert(table, "joao", "1");
+//    ht_insert(table, "corno", "2");
+//    ht_insert(table, "maria", "3");
+//    ht_insert(table, "gorda", "4");
+//    ht_insert(table, "Jacob", "5");
+//
+//    ht_printTable(table);
+//    ht_freeTable(table);
+//    return 0;
+//}
+
+void ht_printTable(HTable *table){
+    for(size_t i = 0; i < table->size; i++){
+        if(table->entries[i]){
+            printf("%s : %s\n", 
+                    table->entries[i]->key,
+                    table->entries[i]->val
+
+                  );
+        }
+    }
 }
 
 uint32_t ht_djb2(char *key, uint32_t table_size){
