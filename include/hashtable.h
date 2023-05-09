@@ -23,7 +23,7 @@ typedef struct htable{
 
 uint32_t ht_djb2(char *key, uint32_t table_size);
 
-uint32_t ht_hash(char *key, int attempts);
+uint32_t ht_hash(char *key, int attempts, size_t table_size);
 
 //search/insert/delete
 
