@@ -19,9 +19,21 @@ typedef struct htable{
 }HTable;
 
 
-uint32_t ht_hash(char *key);
+//hash function
+
+uint32_t ht_djb2(char *key, uint32_t table_size);
+
+uint32_t ht_hash(char *key, int attempts);
+
+//search/insert/delete
 
 HT_entry *ht_search(HTable *table, char *key);
+
+void ht_insert(HTable *table, char *key, char *val);
+
+void ht_delete(HTable *table, char *key);
+
+//Create/free
 
 HT_entry *ht_createEntry(char *key, char *val);
 

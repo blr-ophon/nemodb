@@ -23,7 +23,7 @@ clean:
 	rm -rf ${OBJECTS} 
 	rm -rf ${EXEC}
 
-testrun: ${EXEC}
+run: ${EXEC}
 	$^ 
 
 debug: ${EXEC}
