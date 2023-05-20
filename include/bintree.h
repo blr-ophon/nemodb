@@ -11,6 +11,8 @@ struct bintNode{
     struct bintNode *Rnode;
 };
 
+struct bintNode *bint_create(void);
+
 void bint_insert(struct bintNode **head, uint32_t val);
 
 void bint_delete(struct bintNode **head, uint32_t val);

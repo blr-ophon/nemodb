@@ -1,4 +1,32 @@
+#include <stdio.h>
 #include "bintree.h"
+
+//int main(void){
+//    struct bintNode *root= bint_create();
+//    for(int i = 0; i < 10; i++){
+//        bint_insert(&root, i);
+//    }
+//
+//    bint_delete(&root, 8);
+//    bint_delete(&root, 15);
+//    bint_delete(&root, 3);
+//    bint_delete(&root, 2);
+//    bint_delete(&root, 5);
+//
+//    for(int i = 0; i < 20; i++){
+//        if(bint_search(root, i)){
+//            printf("%d found\n", i);
+//        }else{
+//            printf("%d Not found\n", i);
+//        }
+//    }
+//    return 0;
+//}
+
+struct bintNode *bint_create(void){ 
+    return calloc(1, sizeof(struct bintNode));
+}
+
 
 bool bint_search(struct bintNode *head, uint32_t val){
     struct bintNode *crnt;
@@ -56,10 +84,9 @@ void bint_delete(struct bintNode **head, uint32_t val){
         return;
     }
     
-    //crnt has no right subtree
-    if(crnt->Rnode == NULL){
+    if(crnt->Rnode == NULL){ //crnt has no right subtree
         if(crnt->Lnode == NULL){
-            //crnt is leaf: Delete and unlink from parent
+            //crnt is a leaf: Delete and unlink from parent
             if(val < prev->val){
                 prev->Lnode = NULL;
             }else{
@@ -75,7 +102,9 @@ void bint_delete(struct bintNode **head, uint32_t val){
             }
             free(crnt);
         }
+
     }else{ //crnt swaps with the leftmost node from its right subtree
+           
         //find leftmost node
         struct bintNode *tmpCrnt = crnt->Rnode;
         struct bintNode *tmpPrev = NULL;
@@ -83,13 +112,13 @@ void bint_delete(struct bintNode **head, uint32_t val){
             tmpPrev = tmpCrnt;
             tmpCrnt = tmpCrnt->Lnode;
         }
-        if(tmpPrev == NULL){
-            //TODO
-            return;
+
+        //rearrange links if necessary
+        if(tmpPrev){
+            tmpPrev->Lnode = tmpCrnt->Rnode;
+            tmpCrnt->Rnode = tmpPrev;
         }
 
-        tmpPrev->Lnode = tmpCrnt->Rnode;
-        tmpCrnt->Rnode = tmpPrev;
         if(val < prev->val){
             prev->Lnode = tmpCrnt;
         }else{
@@ -97,10 +126,5 @@ void bint_delete(struct bintNode **head, uint32_t val){
         }
         free(crnt);
     }
-
-
-    
-
-
 }
 
