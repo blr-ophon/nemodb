@@ -18,13 +18,36 @@ Btree *Btree_create(uint8_t degree){
     return btree;
 }
 
-void Btree_insert(Btree *btree, uint32_t key, void *val){
-    BtreeNode *node = BtreeNode_create(btree->degree);
-    node->keys[0] = key;
-    node->record = val;
-    node->size = 1;
+//returns node pointer and the id of the key in idx
+BtreeNode *Btree_search(Btree *btree, uint32_t key, int *idx){
+    BtreeNode *tmp = btree->root;
+    while(tmp != NULL){
+        for(int i = 0; i < tmp->size; i++){
+            //key found
+            if(key == tmp->keys[i]){
+                *idx = i;
+                return tmp;
+            }
 
+            //key is bigger than every node key
+            if(i == tmp->size){ 
+                tmp = tmp->children[i+1];
+                break;
+            }
 
+            //key is smaller than node key i
+            if(key < tmp->keys[i]){ 
+                tmp = tmp->children[i];
+                break;
+            }
+            //key is between nodekey i and i+1
+            if(key > tmp->keys[i] && key < tmp->keys[i+1]){ 
+                tmp = tmp->children[i+1];
+                break;
+            }
+        }
+    }
+    return tmp;
 }
 
 static void Btree_free_rec(BtreeNode *node){
@@ -45,14 +68,13 @@ void Btree_free(Btree *btree){
 /// NODE
 ////////////////////////////////////////////////////////////////////////////////
 
+
 BtreeNode *BtreeNode_create(uint8_t n){
     BtreeNode *btnode = (BtreeNode*) calloc(1, sizeof(BtreeNode));
     btnode->children = calloc(n, sizeof(void*));
     btnode->keys = calloc(n, sizeof(uint32_t));
     return btnode;
 }
-
-
 
 void BtreeNode_free(BtreeNode *node){
     free(node->children);

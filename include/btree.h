@@ -29,9 +29,9 @@ typedef struct Btree{
 Btree *Btree_create(uint8_t degree);
 void Btree_free(Btree *btree);
 
+BtreeNode *Btree_search(Btree *btree, uint32_t key, int *idx);
 void Btree_insert(Btree *btree, uint32_t key, void *val);
 void Btree_delete(Btree *btree, void *val);
-bool Btree_search(Btree *btree, void *val);
 
 
 #endif
