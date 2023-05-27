@@ -4,17 +4,17 @@
 #include <string.h>
 #include <stdlib.h>
 
-struct db{
+typedef struct database{
     char *name;
     char *path;
-};
+}Database;
 
-struct db *DB_create(char *name);
+Database *DB_create(char *name);
 
-void DB_free(struct db *db);
+void DB_free(Database *db);
 
-void DB_setKeyValue(char *key, char *val);
+void DB_setKeyValue(Database *db, char *key, char *val);
 
-char *DB_getKeyValue(char *key);
+char *DB_getKeyValue(Database *db, char *key);
 
 #endif

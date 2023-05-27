@@ -5,11 +5,13 @@
 #include "nemodb.h"
 //TODO: check errno for system calls
 
+#define MAX_PATHNAME 64
+#define MAX_KEYNAME 64
 
 int main(void){
-    struct db *db = DB_create("teste");
-    DB_setKeyValue("key", "val");
-    char *val = DB_getKeyValue("key");
+    Database *db = DB_create("teste");
+    DB_setKeyValue(db, "key", "val");
+    char *val = DB_getKeyValue(db, "key");
     printf("%s\n", val);
     free(val);
     DB_free(db);
@@ -17,7 +19,7 @@ int main(void){
 }
 
 //create database directory and struct
-struct db *DB_create(char *name){
+Database *DB_create(char *name){
     struct stat st = {0};
 
     char *basedir = "./nemodb";
@@ -26,32 +28,34 @@ struct db *DB_create(char *name){
     }
     
     //basedir + / + name
-    char dbfolder[64];
+    char dbfolder[MAX_PATHNAME];
     strcat(dbfolder, basedir);
     strcat(dbfolder, "/");
-    strncat(dbfolder, name, 64 - strlen(basedir) + 1);
+    strncat(dbfolder, name, MAX_PATHNAME - strlen(basedir) + 1);
 
     if(stat(dbfolder, &st) < 0){ 
         mkdir(dbfolder, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);  //or 0700
     }
 
-    struct db *database = malloc(sizeof(struct db));
+    Database *database = malloc(sizeof(Database));
     database->name = strdup(name);
     database->path = strdup(dbfolder);  //TODO: absolute path
                                         
     return database;
 }
 
-void DB_free(struct db *db){
+void DB_free(Database *db){
     free(db->name);
     free(db->path);
     free(db);
 }
 
 //Open nemodb/dbname/key.kv and store val
-void DB_setKeyValue(char *key, char *val){
-    char fname[64] = {0};
-    strncat(fname, key, 60);
+void DB_setKeyValue(Database *db, char *key, char *val){
+    char fname[MAX_PATHNAME + MAX_KEYNAME] = {0};
+    strncat(fname, db->path, MAX_PATHNAME);
+    strcat(fname, "/");
+    strncat(fname, key, MAX_KEYNAME - 4);
     strcat(fname, ".kv");
 
     FILE *f = fopen(fname, "w");
@@ -61,9 +65,11 @@ void DB_setKeyValue(char *key, char *val){
 
 //Read all chars(in this case where the values are strings) of
 //nemodb/dbname/key_string.kv and return the complete string
-char *DB_getKeyValue(char *key){
-    char fname[64] = {0};
-    strncat(fname, key, 60);
+char *DB_getKeyValue(Database *db, char *key){
+    char fname[MAX_PATHNAME + MAX_KEYNAME] = {0};
+    strncat(fname, db->path, MAX_PATHNAME);
+    strcat(fname, "/");
+    strncat(fname, key, MAX_KEYNAME - 3);
     strcat(fname, ".kv");
 
     FILE *f = fopen(fname, "r");
