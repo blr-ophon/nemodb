@@ -11,7 +11,7 @@ typedef struct database{
 
 Database *DB_create(char *name);
 
-void DB_free(Database *db);
+void DB_destroy(Database *db);
 
 void DB_setKeyValue(Database *db, char *key, char *val);
 

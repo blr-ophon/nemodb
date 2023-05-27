@@ -7,14 +7,17 @@
 
 #define MAX_PATHNAME 64
 #define MAX_KEYNAME 64
+#define DB_BASEDIR "./databases"
 
 int main(void){
-    Database *db = DB_create("teste");
-    DB_setKeyValue(db, "key", "val");
-    char *val = DB_getKeyValue(db, "key");
-    printf("%s\n", val);
-    free(val);
-    DB_free(db);
+    Database *db = DB_create("test_db");
+    DB_setKeyValue(db, "test_key", "test_val");
+    char *val = DB_getKeyValue(db, "test_key");
+    if(val){
+        printf("%s\n", val);
+        free(val);
+    }
+    DB_destroy(db);
     return 0;
 }
 
@@ -22,7 +25,7 @@ int main(void){
 Database *DB_create(char *name){
     struct stat st = {0};
 
-    char *basedir = "./nemodb";
+    char *basedir = DB_BASEDIR;
     if(stat(basedir, &st) < 0){ 
         mkdir(basedir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);  //or 0700
     }
@@ -44,10 +47,40 @@ Database *DB_create(char *name){
     return database;
 }
 
-void DB_free(Database *db){
+void DB_destroy(Database *db){
+    // Delete database file
+    char command[256];
+    snprintf(command, sizeof(command), "rm -rf %s", db->path);
+    if(system(command) == 0){
+        printf("'%s' database deleted\n", db->name);
+    }else{
+        printf("Failed to delete '%s' database\n", db->name);
+    }
+
     free(db->name);
     free(db->path);
     free(db);
+}
+
+Database *DB_load(char *dbname){
+    struct stat st = {0};
+
+    //basedir + / + name
+    char *basedir = DB_BASEDIR;
+    char dbfolder[MAX_PATHNAME];
+    strcat(dbfolder, basedir);
+    strcat(dbfolder, "/");
+    strncat(dbfolder, dbname, MAX_PATHNAME - strlen(basedir) + 1);
+
+    if(stat(dbfolder, &st) < 0){ 
+        //database not found
+        return NULL;
+    }
+
+    Database *database = malloc(sizeof(Database));
+    database->name = strdup(dbname);
+    database->path = strdup(dbfolder);  
+    return database;
 }
 
 //Open nemodb/dbname/key.kv and store val
