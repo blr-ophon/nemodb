@@ -70,6 +70,7 @@ void ht_insert(HTable *table, char *key, char *val){
         int i = 0;
         do{
             if(strncmp(entries[hash]->key, key, MAX_NAME)){
+                //TODO: not portable for non-string values
                 //ignore if trying to insert repeated entry
                 return;
             }
@@ -87,6 +88,7 @@ void ht_delete(HTable *table, char *key){
     if(entries[hash]){
         //entry is found
         if(strncmp(entries[hash]->key, key, MAX_NAME) == 0){
+            //TODO: not portable for non-string values
             //if key matches
             ht_freeEntry(entries[hash]);
             entries[hash]->key = NULL;
@@ -104,6 +106,7 @@ void ht_delete(HTable *table, char *key){
                     return;
                 }
             }while(strncmp(entries[hash]->key, key, MAX_NAME));
+            //TODO: not portable for non-string values
 
             ht_freeEntry(entries[hash]);
             entries[hash]->key = NULL;
@@ -120,6 +123,7 @@ HT_entry *ht_search(HTable *table, char *key){
     if(entries[hash]){
         //entry is found
         if(strncmp(entries[hash]->key, key, MAX_NAME) == 0){
+            //TODO: not portable for non-string values
             //if key matches
             return entries[hash];
             
@@ -134,6 +138,7 @@ HT_entry *ht_search(HTable *table, char *key){
                     return NULL;
                 }
             }while(strncmp(entries[hash]->key, key, MAX_NAME));
+                //TODO: not portable for non-string values
 
             return entries[hash];
         }
