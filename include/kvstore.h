@@ -15,6 +15,10 @@
 //to insert, insert in the hashmap, append to metafile and append to datafile
 //to delete, delete in the datafile, delete in the metafile and delete in the map 
 
+////////////////////////////////////////////////////////////////////////////////
+///RECORD
+////////////////////////////////////////////////////////////////////////////////
+
 typedef struct{
     uint32_t checksum; 
     uint32_t timestamp; 
@@ -29,11 +33,15 @@ typedef struct{
     uint8_t value[];
 }Record;
 
-//wraps header in little endian and stores in buf
 void Header_encode(RecHeader *header, uint8_t *buf);
-//reads bytes from buf and writes to header
 void Header_decode(uint8_t *buf, RecHeader *header);
 
+void Record_store(Record *rec);
+void Record_load(Record *rec);
+
+
+////////////////////////////////////////////////////////////////////////////////
+///DATAFILE
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef struct{
@@ -49,18 +57,8 @@ void Datafile_delete(void);
 void Datafile_search(void);
 
 ////////////////////////////////////////////////////////////////////////////////
-
-typedef struct {
-    uint32_t  Timestamp; 
-    uint32_t RecordSize;  
-    uint32_t RecordPos;    
-    uint32_t FileID;        
-}Meta;
-
-//loads database "name" map into memory
-void Metadata_load(char *name);
-
-uint32_t Metadata_getOffset(char *key);
+///METADATA
+////////////////////////////////////////////////////////////////////////////////
 
 
 #endif

@@ -21,12 +21,55 @@
 //    return 0;
 //}
 
+//typedef struct {
+//    uint32_t  Timestamp; 
+//    uint32_t RecordSize;  
+//    uint32_t RecordPos;    
+//    uint32_t FileID;        
+//}Meta;
+
+void Metadata_append(FILE *f, Record *rec, Meta *metadata){
+    //4 bytes of key length / K_len bytes of key / sizeof(Meta) bytes of Meta
+    uint32_t K_len = rec->header.Ksize;
+    fwrite(&K_len, sizeof(uint32_t), 1, f);
+    fwrite(&rec->key, K_len, 1, f);
+    fwrite(metadata, sizeof(Meta), 1, f);   
+}
+
+HTable *Metadata_load(FILE *f){
+    //get number of entries
+    fseek(f, 0, SEEK_END);
+    int flength = ftell(f)/sizeof(Meta);
+    rewind(f);
+
+    //load into Hashtable
+    HTable *table = ht_createTable(flength*3);
+    for(int i = 0; i < flength; i++){
+        Meta *metadata = malloc(sizeof(Meta));
+
+        //read key length
+        uint32_t K_len;
+        fread(&K_len, sizeof(uint32_t), 1, f);
+
+        //read key 
+        char *key = malloc(K_len);
+        fread(key, K_len, 1, f);
+        fread(metadata, sizeof(Meta), 1, f);
+
+        //insert in hash table
+        ht_insert(table, key, metadata);
+        free(key);
+    }
+    return table;
+
+}
+
 void ht_printTable(HTable *table){
     for(size_t i = 0; i < table->size; i++){
         if(table->entries[i]){
-            printf("%s : %s\n", 
+            printf("%s : %u\n", 
                     table->entries[i]->key,
-                    table->entries[i]->val
+                    table->entries[i]->val.RecordPos
 
                   );
         }
@@ -57,7 +100,7 @@ uint32_t ht_hash(char *key, int attempts, size_t table_size){
 }
 
 
-void ht_insert(HTable *table, char *key, char *val){
+void ht_insert(HTable *table, char *key, Meta *val){
     uint32_t hash = ht_hash(key, 0, table->size);
     HT_entry **entries = table->entries;
 
@@ -70,7 +113,6 @@ void ht_insert(HTable *table, char *key, char *val){
         int i = 0;
         do{
             if(strncmp(entries[hash]->key, key, MAX_NAME)){
-                //TODO: not portable for non-string values
                 //ignore if trying to insert repeated entry
                 return;
             }
@@ -88,11 +130,10 @@ void ht_delete(HTable *table, char *key){
     if(entries[hash]){
         //entry is found
         if(strncmp(entries[hash]->key, key, MAX_NAME) == 0){
-            //TODO: not portable for non-string values
             //if key matches
             ht_freeEntry(entries[hash]);
             entries[hash]->key = NULL;
-            entries[hash]->val = NULL;
+            //entries[hash]->val = NULL;
 
             
         //Collision
@@ -106,11 +147,10 @@ void ht_delete(HTable *table, char *key){
                     return;
                 }
             }while(strncmp(entries[hash]->key, key, MAX_NAME));
-            //TODO: not portable for non-string values
 
             ht_freeEntry(entries[hash]);
             entries[hash]->key = NULL;
-            entries[hash]->val = NULL;
+            //entries[hash]->val = NULL;
         }
     }
 }
@@ -123,7 +163,6 @@ HT_entry *ht_search(HTable *table, char *key){
     if(entries[hash]){
         //entry is found
         if(strncmp(entries[hash]->key, key, MAX_NAME) == 0){
-            //TODO: not portable for non-string values
             //if key matches
             return entries[hash];
             
@@ -138,7 +177,6 @@ HT_entry *ht_search(HTable *table, char *key){
                     return NULL;
                 }
             }while(strncmp(entries[hash]->key, key, MAX_NAME));
-                //TODO: not portable for non-string values
 
             return entries[hash];
         }
@@ -147,10 +185,10 @@ HT_entry *ht_search(HTable *table, char *key){
     return NULL;
 }
 
-HT_entry *ht_createEntry(char *key, char *val){
+HT_entry *ht_createEntry(char *key, Meta *val){
     HT_entry *entry = malloc(sizeof(HT_entry));
     entry->key = strdup(key);
-    entry->val = strdup(val);
+    memcpy(&entry->val, val, sizeof(Meta));
     return entry;
 }
 
@@ -167,7 +205,7 @@ HTable *ht_createTable(size_t size){
 
 void ht_freeEntry(HT_entry *entry){
     free(entry->key);
-    free(entry->val);
+    //free(entry->val);
 }
 
 void ht_freeTable(HTable *table){
@@ -180,4 +218,5 @@ void ht_freeTable(HTable *table){
     free(table->entries);
     free(table);
 }
+
 

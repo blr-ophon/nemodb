@@ -6,11 +6,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include "kvstore.h"
+//TODO: change name to metadata
+
+typedef struct {
+    uint32_t  Timestamp; 
+    uint32_t RecordSize;  
+    uint32_t RecordPos;    
+    uint32_t FileID;        
+}Meta;
+
 
 typedef struct ht_entry{
     char *key;
-    char *val;
+    Meta val; 
 }HT_entry;
+
 
 typedef struct htable{
     size_t size;
@@ -18,6 +29,9 @@ typedef struct htable{
     HT_entry **entries; //array of pointers to entries
 }HTable;
 
+
+uint32_t Metadata_getOffset(char *key);
+HTable *Metadata_load(FILE *f);
 
 //hash function
 
@@ -29,7 +43,7 @@ uint32_t ht_hash(char *key, int attempts, size_t table_size);
 
 HT_entry *ht_search(HTable *table, char *key);
 
-void ht_insert(HTable *table, char *key, char *val);
+void ht_insert(HTable *table, char *key, Meta *val);
 
 void ht_delete(HTable *table, char *key);
 
@@ -37,7 +51,7 @@ void ht_printTable(HTable *table);
 
 //Create/free
 
-HT_entry *ht_createEntry(char *key, char *val);
+HT_entry *ht_createEntry(char *key, Meta *val);
 
 HTable *ht_createTable(size_t size);
 
