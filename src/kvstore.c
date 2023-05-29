@@ -23,7 +23,7 @@ Record *Record_create(char *key, uint8_t *val, size_t n){
     memcpy(rec->value, val, n);
     
     //HEADER
-    rec->header.Ksize = strlen(key) + 1;
+    rec->header.Ksize = strlen(key);
     rec->header.Vsize = n;
     //TODO
     rec->header.checksum = 0; 
@@ -50,9 +50,11 @@ void Record_store(Database *db, Record *rec, Meta *meta){
 
     //write header, key and value in order
     fwrite(&rec->header, sizeof(RecHeader), 1, db->datafile.writer);
+
     for(uint32_t i = 0; i < rec->header.Ksize; i++){
         fwrite(&rec->key[i], 1, 1, db->datafile.writer);
     }
+
     for(uint32_t i = 0; i < rec->header.Vsize; i++){
         fwrite(&rec->value[i], 1, 1, db->datafile.writer);
     }
@@ -91,9 +93,13 @@ Record *Record_load(Database *db, char *key){
             rec->header.Ksize,
             rec->header.Vsize
           );
+
+    rec->key = calloc(1, rec->header.Ksize + 1);
     for(uint32_t i = 0; i < rec->header.Ksize; i++){
         fread(&rec->key[i], 1, 1, db->datafile.reader);
     }
+
+    rec->value = calloc(1, rec->header.Vsize);
     for(uint32_t i = 0; i < rec->header.Vsize; i++){
         fread(&rec->value[i], 1, 1, db->datafile.reader);
     }

@@ -32,12 +32,10 @@ void Metadata_append(FILE *f, Record *rec, Meta *metadata){
     ferror_check(f, rv);
 
     //append key 
-    fseek(f, rv, SEEK_CUR);
     rv = fwrite(rec->key, sizeof(char), K_len, f);
     ferror_check(f, rv);
 
     //append metadata
-    fseek(f, rv, SEEK_CUR);
     rv = fwrite(metadata, sizeof(Meta), 1, f);   
     ferror_check(f, rv);
     fflush(f);
@@ -53,14 +51,14 @@ HTable *Metadata_load(FILE *f){
 
     //test for empty indexfile
     fseek(f, 0, SEEK_END);
-    uint32_t flength = ftell(f)/sizeof(Meta);
+    uint32_t flength = ftell(f);
     if(flength < sizeof(Meta)){
         return table;
     }
 
     //read all entries from indexfile to hashtable
     rewind(f);
-    while(!feof(f)){
+    //while(!feof(f)){
         Meta *metadata = malloc(sizeof(Meta));
 
         //read key length
@@ -70,7 +68,7 @@ HTable *Metadata_load(FILE *f){
 
         //read key 
         char *key = calloc(K_len+1, sizeof(char));
-        rv = fread(key, K_len, 1, f);
+        rv = fread(key, sizeof(char), K_len, f);
         ferror_check(f, rv);
 
         //read metadata
@@ -81,7 +79,7 @@ HTable *Metadata_load(FILE *f){
         ht_insert(table, key, metadata);
         free(key);
         free(metadata);
-    }
+    //}
     fflush(f);
     return table;
 

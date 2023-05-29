@@ -11,14 +11,14 @@
 #define DB_BASEDIR "./databases"
 
 int main(void){
-    DB_create("test_db");
+    //DB_create("test_db");
     Database *db = DB_load("test_db");
     if(!db){
         printf("database not found");
     }
 
     uint8_t data[7] = {1,2,3,4,5,6,7};
-    DB_insert(db, "testkey", data, 7);
+    //DB_insert(db, "testkey", data, 7);
 
     Record *rec = DB_search(db, "testkey");
 
