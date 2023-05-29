@@ -58,12 +58,11 @@ HTable *Metadata_load(FILE *f){
 
     //read all entries from indexfile to hashtable
     rewind(f);
-    //while(!feof(f)){
-        Meta *metadata = malloc(sizeof(Meta));
-
+    for(;;){
         //read key length
         uint32_t K_len;
         int rv = fread(&K_len, sizeof(uint32_t), 1, f);
+        if(feof(f)) break;
         ferror_check(f, rv);
 
         //read key 
@@ -72,6 +71,7 @@ HTable *Metadata_load(FILE *f){
         ferror_check(f, rv);
 
         //read metadata
+        Meta *metadata = malloc(sizeof(Meta));
         rv = fread(metadata, sizeof(Meta), 1, f);
         ferror_check(f, rv);
 
@@ -79,7 +79,7 @@ HTable *Metadata_load(FILE *f){
         ht_insert(table, key, metadata);
         free(key);
         free(metadata);
-    //}
+    }
     fflush(f);
     return table;
 

@@ -11,23 +11,33 @@
 #define DB_BASEDIR "./databases"
 
 int main(void){
-    //DB_create("test_db");
+    DB_create("test_db");
     Database *db = DB_load("test_db");
     if(!db){
         printf("database not found");
     }
 
-    uint8_t data[7] = {1,2,3,4,5,6,7};
-    //DB_insert(db, "testkey", data, 7);
+    uint8_t data1[7] = {1,2,3,4,5,6,7};
+    DB_insert(db, "testkey1", data1, 7);
 
-    Record *rec = DB_search(db, "testkey");
+    uint8_t data2[7] = {7,6,5,4,3,2,1};
+    DB_insert(db, "testkey2", data2, 7);
 
+
+    Record *rec = DB_search(db, "testkey1");
+    for(uint32_t i = 0; i < rec->header.Vsize; i++){
+        printf("%d ", rec->value[i]);
+    }
+    printf("\n"); 
+
+    rec = DB_search(db, "testkey2");
     for(uint32_t i = 0; i < rec->header.Vsize; i++){
         printf("%d ", rec->value[i]);
     }
     printf("\n"); 
 
 
+    Record_free(rec);
     DB_free(db);
     return 0;
 }
