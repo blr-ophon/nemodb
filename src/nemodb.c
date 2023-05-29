@@ -41,9 +41,9 @@ void DB_create(char *name){
     }
     
     //create database directory (basedir + / + name)
-    char dbfolder[MAX_PATHNAME];
+    char dbfolder[MAX_PATHNAME] = {0};
     strncat(dbfolder, basedir, strlen(basedir));
-    strncat(dbfolder, "/", 1);
+    strncat(dbfolder, "/", 2);
     strncat(dbfolder, name, MAX_PATHNAME - strlen(basedir) + 1);
 
     if(stat(dbfolder, &st) < 0){ 
@@ -51,15 +51,22 @@ void DB_create(char *name){
     }
 
     //create database file
-    char dbfile[2*MAX_PATHNAME];
+    char dbfile[2*MAX_PATHNAME] = {0};
     strncat(dbfile, dbfolder, strlen(dbfolder));
-    strncat(dbfile, "/", 1);
+    strncat(dbfile, "/", 2);
     strncat(dbfile, name, MAX_PATHNAME - strlen(basedir) + 1);
-    strncat(dbfile, ".dat", 4);
+
+    char metafile[2*MAX_PATHNAME] = {0};
+    strncpy(metafile, dbfile, strlen(dbfile));
+
+    strncat(dbfile, ".dat", 5);
+    strncat(metafile, ".kv", 5);
 
     //TODO: ask if user wishes to overwrite if it's the same name
-    FILE *f = fopen(dbfile, "w");
-    fclose(f);
+    FILE *dbf = fopen(dbfile, "w");
+    FILE *metaf = fopen(metafile, "w");
+    fclose(dbf);
+    fclose(metaf);
 }
 
 Database *DB_load(char *dbname){
@@ -67,15 +74,17 @@ Database *DB_load(char *dbname){
 
     //basedir + / + name + / + name.dat
     char *basedir = DB_BASEDIR;
-    char dbfolder[MAX_PATHNAME];
+
+    char dbfolder[MAX_PATHNAME] = {0};
     strncat(dbfolder, basedir, strlen(basedir));
-    strncat(dbfolder, "/", 1);
+    strncat(dbfolder, "/", 2);
     strncat(dbfolder, dbname, MAX_PATHNAME - strlen(basedir) + 1);
-    char dbfile[2*MAX_PATHNAME];
+
+    char dbfile[2*MAX_PATHNAME] = {0};
     strncat(dbfile, dbfolder, strlen(dbfolder));
-    strncat(dbfile, "/", 1);
+    strncat(dbfile, "/", 2);
     strncat(dbfile, dbname, MAX_PATHNAME - strlen(basedir) + 1);
-    strncat(dbfile, ".dat", 4);
+    strncat(dbfile, ".dat", 5);
 
     if(stat(dbfolder, &st) < 0){ 
         //database not found
@@ -101,8 +110,8 @@ Database *DB_load(char *dbname){
     //fill datafile 
     database->datafile.id = 0;  //TODO
     database->datafile.offset = 0;  //TODO
-    database->datafile.reader = fopen(database->path, "rb");
-    database->datafile.writer = fopen(database->path, "ab+");
+    database->datafile.reader = fopen(dbfile, "rb");
+    database->datafile.writer = fopen(dbfile, "ab+");
     //TODO: check fopen errno
 
     return database;
