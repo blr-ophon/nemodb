@@ -11,7 +11,7 @@
 #define DB_BASEDIR "./databases"
 
 int main(void){
-    DB_create("test_db");
+    DB_create("test_db2");
     Database *db = DB_load("test_db");
 
     uint8_t data[7] = {1,2,3,4,5,6,7};
@@ -42,9 +42,7 @@ void DB_create(char *name){
     
     //create database directory (basedir + / + name)
     char dbfolder[MAX_PATHNAME] = {0};
-    strncat(dbfolder, basedir, strlen(basedir));
-    strncat(dbfolder, "/", 2);
-    strncat(dbfolder, name, MAX_PATHNAME - strlen(basedir) + 1);
+    snprintf(dbfolder, MAX_PATHNAME, "%s/%s", basedir, name);
 
     if(stat(dbfolder, &st) < 0){ 
         mkdir(dbfolder, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);  //or 0700
@@ -52,15 +50,9 @@ void DB_create(char *name){
 
     //create database file
     char dbfile[2*MAX_PATHNAME] = {0};
-    strncat(dbfile, dbfolder, strlen(dbfolder));
-    strncat(dbfile, "/", 2);
-    strncat(dbfile, name, MAX_PATHNAME - strlen(basedir) + 1);
-
     char metafile[2*MAX_PATHNAME] = {0};
-    strncpy(metafile, dbfile, strlen(dbfile));
-
-    strncat(dbfile, ".dat", 5);
-    strncat(metafile, ".kv", 5);
+    snprintf(dbfile, MAX_PATHNAME, "%s/%s%s", dbfolder, name, ".dat");
+    snprintf(metafile, MAX_PATHNAME, "%s/%s%s", dbfolder, name, ".kv");
 
     //TODO: ask if user wishes to overwrite if it's the same name
     FILE *dbf = fopen(dbfile, "w");
@@ -76,15 +68,12 @@ Database *DB_load(char *dbname){
     char *basedir = DB_BASEDIR;
 
     char dbfolder[MAX_PATHNAME] = {0};
-    strncat(dbfolder, basedir, strlen(basedir));
-    strncat(dbfolder, "/", 2);
-    strncat(dbfolder, dbname, MAX_PATHNAME - strlen(basedir) + 1);
+    snprintf(dbfolder, MAX_PATHNAME, "%s/%s", basedir, dbname);
 
     char dbfile[2*MAX_PATHNAME] = {0};
-    strncat(dbfile, dbfolder, strlen(dbfolder));
-    strncat(dbfile, "/", 2);
-    strncat(dbfile, dbname, MAX_PATHNAME - strlen(basedir) + 1);
-    strncat(dbfile, ".dat", 5);
+    char metafile[2*MAX_PATHNAME] = {0};
+    snprintf(dbfile, MAX_PATHNAME, "%s/%s%s", dbfolder, dbname, ".dat");
+    snprintf(metafile, MAX_PATHNAME, "%s/%s%s", dbfolder, dbname, ".kv");
 
     if(stat(dbfolder, &st) < 0){ 
         //database not found
@@ -96,18 +85,15 @@ Database *DB_load(char *dbname){
     database->path = strdup(dbfolder);  
 
     //LOAD HASHTABLE
-    char metadata[MAX_PATHNAME];
-    strncat(metadata, "/", 1);
-    strncat(metadata, dbname, strlen(dbname));
-    strncat(metadata, ".kv", 3);
 
-    FILE *metafile = fopen(metadata, "ab+"); 
-    if(!metafile){
+    FILE *metaf = fopen(metafile, "ab+"); 
+    if(!metaf){
         //TODO: file opening failed
     }
-    database->keyDir = Metadata_load(metafile);
+    database->keyDir = Metadata_load(metaf);
 
-    //fill datafile 
+    //LOAD DATAFILE
+    
     database->datafile.id = 0;  //TODO
     database->datafile.offset = 0;  //TODO
     database->datafile.reader = fopen(dbfile, "rb");
@@ -143,12 +129,12 @@ void DB_destroy(Database *db){
 void DB_insert(Database *db, char *key, uint8_t *data, size_t size){
     //create and store record file
     Record *rec = Record_create(key, data, size);         
-    Meta *metadata = NULL;
-    Record_store(db, rec, metadata);
+    Meta metadata; 
+    Record_store(db, rec, &metadata);
     Record_free(rec);
 
     //store in hashmap
-    ht_insert(db->keyDir, key, metadata);
+    ht_insert(db->keyDir, key, &metadata);
 }
 
 Record *DB_search(Database *db, char *key){

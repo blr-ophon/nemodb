@@ -2,6 +2,7 @@
 #include "kvstore.h"
 
 #define MAX_NAME 128
+#define TABLE_SIZE 128      //TODO: remove this 
 
 void Metadata_append(FILE *f, Record *rec, Meta *metadata){
     //4 bytes of key length / K_len bytes of key / sizeof(Meta) bytes of Meta
@@ -20,6 +21,7 @@ HTable *Metadata_load(FILE *f){
     //get number of entries
     fseek(f, 0, SEEK_END);
     int flength = ftell(f)/sizeof(Meta);
+    if(flength < TABLE_SIZE) flength = TABLE_SIZE;
     rewind(f);
 
     //load into Hashtable
