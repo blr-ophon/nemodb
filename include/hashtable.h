@@ -6,10 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include "kvstore.h"
 //TODO: change name to metadata
 
-typedef struct {
+struct record;
+
+typedef struct meta{
     uint32_t  Timestamp; 
     uint32_t RecordSize;  
     uint32_t RecordPos;    
@@ -30,7 +31,10 @@ typedef struct htable{
 }HTable;
 
 
+void Metadata_append(FILE *f, struct record *rec, Meta *metadata);
+
 uint32_t Metadata_getOffset(char *key);
+
 HTable *Metadata_load(FILE *f);
 
 //hash function

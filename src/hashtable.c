@@ -1,34 +1,12 @@
 #include "hashtable.h"
+#include "kvstore.h"
 
 #define MAX_NAME 128
 
-//int main(void){
-//    HTable *table = ht_createTable(64);
-//    printf("joao => %u\n", ht_djb2("joao", table->size));
-//    printf("corno => %u\n", ht_djb2("corno", table->size));
-//    printf("maria => %u\n", ht_djb2("maria", table->size));
-//    printf("gorda => %u\n", ht_djb2("gorda", table->size));
-//    printf("Jacob => %u\n", ht_djb2("Jacob", table->size));
-//
-//    ht_insert(table, "joao", "1");
-//    ht_insert(table, "corno", "2");
-//    ht_insert(table, "maria", "3");
-//    ht_insert(table, "gorda", "4");
-//    ht_insert(table, "Jacob", "5");
-//
-//    ht_printTable(table);
-//    ht_freeTable(table);
-//    return 0;
-//}
-
-//typedef struct {
-//    uint32_t  Timestamp; 
-//    uint32_t RecordSize;  
-//    uint32_t RecordPos;    
-//    uint32_t FileID;        
-//}Meta;
-
 void Metadata_append(FILE *f, Record *rec, Meta *metadata){
+    //generate metadata from record
+
+
     //4 bytes of key length / K_len bytes of key / sizeof(Meta) bytes of Meta
     uint32_t K_len = rec->header.Ksize;
     fwrite(&K_len, sizeof(uint32_t), 1, f);
