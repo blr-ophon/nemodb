@@ -139,10 +139,12 @@ void DB_insert(Database *db, char *key, uint8_t *data, size_t size){
 
     //store in hashmap
     ht_insert(db->keyDir, key, &metadata);
+    fflush(db->datafile.writer);
 }
 
 Record *DB_search(Database *db, char *key){
     //fseek(db->datafile.reader, metadata->RecordPos, SEEK_SET);
     //fread(rec, metadata->RecordSize, 1, db->datafile.reader);
+    fflush(db->datafile.reader);
     return Record_load(db, key);
 }

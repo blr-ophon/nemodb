@@ -85,7 +85,6 @@ Record *Record_load(Database *db, char *key){
     fseek(db->datafile.reader, metadata->RecordPos, SEEK_SET);
     printf("FTELL: %li\n", ftell(db->datafile.reader));
 
-    fflush(db->datafile.writer);
     int rv = fread(&rec->header, sizeof(RecHeader), 1, db->datafile.reader);
     ferror_check(db->datafile.reader, rv);
     printf("Header(%u(cs) | %u(ex) | %u(ts) | %u(ksize) | %u(vsize))\n",

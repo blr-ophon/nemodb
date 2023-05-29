@@ -9,6 +9,7 @@ void Metadata_append(FILE *f, Record *rec, Meta *metadata){
     fwrite(&K_len, sizeof(uint32_t), 1, f);
     fwrite(&rec->key, K_len, 1, f);
     fwrite(metadata, sizeof(Meta), 1, f);   
+    fflush(f);
 }
 
 Meta *Metadata_retrieve(HTable *keyDir, char *key){
@@ -42,6 +43,7 @@ HTable *Metadata_load(FILE *f){
         ht_insert(table, key, metadata);
         free(key);
     }
+    fflush(f);
     return table;
 
 }
