@@ -57,18 +57,14 @@ void Record_store(Database *db, Record *rec, Meta *meta){
         fwrite(&rec->value[i], 1, 1, db->datafile.writer);
     }
 
-    //create and store metadata
+    //create metadata
     meta->FileID = db->datafile.id;
     meta->RecordSize = size;
     meta->RecordPos = fpos;
     meta->Timestamp = rec->header.timestamp;        
-
-    //append to indexfile 
-    Metadata_append(db->indexfile.writer, rec, meta);
 }
 
 
-//TODO: record_load receives offset and datafile only
 //load record from datafile
 Record *Record_load(Database *db, char *key){
     Record *rec = (Record*) malloc(sizeof(Record));
@@ -85,6 +81,7 @@ Record *Record_load(Database *db, char *key){
     fseek(db->datafile.reader, metadata->RecordPos, SEEK_SET);
     printf("FTELL: %li\n", ftell(db->datafile.reader));
 
+    //read header, key and value in order
     int rv = fread(&rec->header, sizeof(RecHeader), 1, db->datafile.reader);
     ferror_check(db->datafile.reader, rv);
     printf("Header(%u(cs) | %u(ex) | %u(ts) | %u(ksize) | %u(vsize))\n",

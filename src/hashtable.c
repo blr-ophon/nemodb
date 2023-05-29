@@ -3,12 +3,40 @@
 
 #define MAX_NAME 128
 #define TABLE_SIZE 128      //TODO: remove this 
+                            
+//TODO: resize function to use when more than 3 attempts are made 
+//to insert an item. Duplicate the size but keep the same hashes for
+//the previous values
+
+static void ferror_check(FILE *f, int rv){
+    if (rv ==  0) {
+        if (feof(f)) {
+            fprintf(stderr, "Error: Reached end of file.\n");
+        } else if (ferror(f)) {
+            perror("Error reading from file");
+        } else {
+            fprintf(stderr, "Unknown error occurred during file read.\n");
+        }
+        fclose(f);
+        exit(1);
+    }
+}
 
 void Metadata_append(FILE *f, Record *rec, Meta *metadata){
     uint32_t K_len = rec->header.Ksize;
-    fwrite(&K_len, sizeof(uint32_t), 1, f);
-    fwrite(&rec->key, K_len, 1, f);
-    fwrite(metadata, sizeof(Meta), 1, f);   
+
+    //append key lenght
+    int rv = fwrite(&K_len, sizeof(uint32_t), 1, f);
+    ferror_check(f, rv);
+
+    //append key 
+    rv = fwrite(&rec->key, K_len, 1, f);
+    ferror_check(f, rv);
+
+    //append metadata
+    rv = fwrite(metadata, sizeof(Meta), 1, f);   
+    ferror_check(f, rv);
+
     fflush(f);
 }
 
@@ -21,27 +49,35 @@ HTable *Metadata_load(FILE *f){
     //get number of entries
     fseek(f, 0, SEEK_END);
     int flength = ftell(f)/sizeof(Meta);
-    if(flength < TABLE_SIZE) flength = TABLE_SIZE;
     rewind(f);
 
+    //create table
+    int table_size = 3*flength;
+    if(flength < TABLE_SIZE) table_size = TABLE_SIZE;
+    HTable *table = ht_createTable(table_size);
+
     //load into Hashtable
-    HTable *table = ht_createTable(flength*3);
     for(int i = 0; i < flength; i++){
-        //TODO: use create_entry
         Meta *metadata = malloc(sizeof(Meta));
 
         //read key length
         uint32_t K_len;
-        fread(&K_len, sizeof(uint32_t), 1, f);
+        int rv = fread(&K_len, sizeof(uint32_t), 1, f);
+        ferror_check(f, rv);
 
         //read key 
-        char *key = malloc(K_len);
-        fread(key, K_len, 1, f);
-        fread(metadata, sizeof(Meta), 1, f);
+        char *key = calloc(K_len+1, sizeof(char));
+        rv = fread(key, K_len, 1, f);
+        ferror_check(f, rv);
+
+        //read metadata
+        rv = fread(metadata, sizeof(Meta), 1, f);
+        ferror_check(f, rv);
 
         //insert in hash table
         ht_insert(table, key, metadata);
         free(key);
+        free(metadata);
     }
     fflush(f);
     return table;
@@ -189,7 +225,6 @@ HTable *ht_createTable(size_t size){
 
 void ht_freeEntry(HT_entry *entry){
     free(entry->key);
-    //free(entry->val);
 }
 
 void ht_freeTable(HTable *table){

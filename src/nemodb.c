@@ -29,7 +29,7 @@ int main(void){
     printf("\n"); 
 
 
-    //DB_free(db);
+    DB_free(db);
     return 0;
 }
 
@@ -135,11 +135,15 @@ void DB_insert(Database *db, char *key, uint8_t *data, size_t size){
     Record *rec = Record_create(key, data, size);         
     Meta metadata;  //to be filled by Record_store
     Record_store(db, rec, &metadata);
-    Record_free(rec);
+
+    //append to indexfile 
+    Metadata_append(db->indexfile.writer, rec, &metadata);
 
     //store in hashmap
     ht_insert(db->keyDir, key, &metadata);
     fflush(db->datafile.writer);
+
+    Record_free(rec);
 }
 
 Record *DB_search(Database *db, char *key){
