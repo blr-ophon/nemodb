@@ -20,6 +20,7 @@ typedef struct database{
 
     HTable *keyDir; 
     Datafile datafile;
+    Datafile indexfile;
 }Database;
 
 

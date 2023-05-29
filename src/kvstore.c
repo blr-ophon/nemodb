@@ -2,6 +2,20 @@
 #include "hashtable.h"
 #include "nemodb.h"
 
+static void ferror_check(FILE *f, int rv){
+    if (rv ==  0) {
+        if (feof(f)) {
+            fprintf(stderr, "Error: Reached end of file.\n");
+        } else if (ferror(f)) {
+            perror("Error reading from file");
+        } else {
+            fprintf(stderr, "Unknown error occurred during file read.\n");
+        }
+        fclose(f);
+        exit(1);
+    }
+}
+
 Record *Record_create(char *key, uint8_t *val, size_t n){
     Record *rec = (Record*) malloc(sizeof(Record));
     rec->key = strdup(key);
@@ -25,12 +39,23 @@ void Record_free(Record *rec){
     free(rec);
 }
 
-//store record in datafile, fills metadata with info on how it was stored
+//store record in datafile, meta receives info on how the record was stored
 void Record_store(Database *db, Record *rec, Meta *meta){
+    //APPEND RECORD TO DATAFILE
+    
+    //set cursor
     size_t size = sizeof(Record) + rec->header.Ksize + rec->header.Vsize;
-    fseek(db->datafile.reader, 0, SEEK_END);
-    int fpos = ftell(db->datafile.reader);
-    fwrite(rec, size, 1, db->datafile.writer);
+    fseek(db->datafile.writer, 0, SEEK_END);
+    uint32_t fpos = ftell(db->datafile.writer);
+
+    //write header, key and value in order
+    fwrite(&rec->header, sizeof(RecHeader), 1, db->datafile.writer);
+    for(uint32_t i = 0; i < rec->header.Ksize; i++){
+        fwrite(&rec->key[i], 1, 1, db->datafile.writer);
+    }
+    for(uint32_t i = 0; i < rec->header.Vsize; i++){
+        fwrite(&rec->value[i], 1, 1, db->datafile.writer);
+    }
 
     //create and store metadata
     meta->FileID = db->datafile.id;
@@ -38,20 +63,43 @@ void Record_store(Database *db, Record *rec, Meta *meta){
     meta->RecordPos = fpos;
     meta->Timestamp = rec->header.timestamp;        
 
-    Metadata_append(db->datafile.writer, rec, meta);
+    //append to indexfile 
+    Metadata_append(db->indexfile.writer, rec, meta);
 }
 
+
+//TODO: record_load receives offset and datafile only
 //load record from datafile
 Record *Record_load(Database *db, char *key){
-    //TODO replace HT_entry with Meta struct
-    HT_entry *metadata = ht_search(db->keyDir, key);
-
-    uint32_t offset = metadata->val.RecordPos;
-    uint32_t length = metadata->val.RecordSize;
-
     Record *rec = (Record*) malloc(sizeof(Record));
-    fseek(db->datafile.reader, offset, SEEK_SET);
-    fread(rec, length, 1, db->datafile.reader);
 
+    Meta *metadata = Metadata_retrieve(db->keyDir, key);
+    printf("Metadata(%u(id) | %u(pos) | %u(size) | %u(ts))\n",
+            metadata->FileID,
+            metadata->RecordPos,
+            metadata->RecordSize,
+            metadata->Timestamp
+          );
+
+    //set cursor
+    fseek(db->datafile.reader, metadata->RecordPos, SEEK_SET);
+    printf("FTELL: %li\n", ftell(db->datafile.reader));
+
+    fflush(db->datafile.writer);
+    int rv = fread(&rec->header, sizeof(RecHeader), 1, db->datafile.reader);
+    ferror_check(db->datafile.reader, rv);
+    printf("Header(%u(cs) | %u(ex) | %u(ts) | %u(ksize) | %u(vsize))\n",
+            rec->header.checksum,
+            rec->header.expiry,
+            rec->header.timestamp,
+            rec->header.Ksize,
+            rec->header.Vsize
+          );
+    for(uint32_t i = 0; i < rec->header.Ksize; i++){
+        fread(&rec->key[i], 1, 1, db->datafile.reader);
+    }
+    for(uint32_t i = 0; i < rec->header.Vsize; i++){
+        fread(&rec->value[i], 1, 1, db->datafile.reader);
+    }
     return rec;
 }

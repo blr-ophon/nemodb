@@ -5,7 +5,6 @@
 #define TABLE_SIZE 128      //TODO: remove this 
 
 void Metadata_append(FILE *f, Record *rec, Meta *metadata){
-    //4 bytes of key length / K_len bytes of key / sizeof(Meta) bytes of Meta
     uint32_t K_len = rec->header.Ksize;
     fwrite(&K_len, sizeof(uint32_t), 1, f);
     fwrite(&rec->key, K_len, 1, f);
@@ -27,6 +26,7 @@ HTable *Metadata_load(FILE *f){
     //load into Hashtable
     HTable *table = ht_createTable(flength*3);
     for(int i = 0; i < flength; i++){
+        //TODO: use create_entry
         Meta *metadata = malloc(sizeof(Meta));
 
         //read key length

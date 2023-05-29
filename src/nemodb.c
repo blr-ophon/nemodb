@@ -11,8 +11,11 @@
 #define DB_BASEDIR "./databases"
 
 int main(void){
-    DB_create("test_db2");
+    DB_create("test_db");
     Database *db = DB_load("test_db");
+    if(!db){
+        printf("database not found");
+    }
 
     uint8_t data[7] = {1,2,3,4,5,6,7};
     DB_insert(db, "testkey", data, 7);
@@ -26,7 +29,7 @@ int main(void){
     printf("\n"); 
 
 
-    DB_free(db);
+    //DB_free(db);
     return 0;
 }
 
@@ -85,19 +88,20 @@ Database *DB_load(char *dbname){
     database->path = strdup(dbfolder);  
 
     //LOAD HASHTABLE
-
-    FILE *metaf = fopen(metafile, "ab+"); 
-    if(!metaf){
-        //TODO: file opening failed
-    }
-    database->keyDir = Metadata_load(metaf);
+    
+    database->indexfile.id = 0;  //TODO
+    database->indexfile.offset = 0;  //TODO
+    database->indexfile.reader = fopen(metafile, "rb");
+    database->indexfile.writer = fopen(metafile, "ab");
+    //TODO: check fopen errno
+    database->keyDir = Metadata_load(database->indexfile.reader);
 
     //LOAD DATAFILE
     
     database->datafile.id = 0;  //TODO
     database->datafile.offset = 0;  //TODO
     database->datafile.reader = fopen(dbfile, "rb");
-    database->datafile.writer = fopen(dbfile, "ab+");
+    database->datafile.writer = fopen(dbfile, "ab");
     //TODO: check fopen errno
 
     return database;
@@ -129,7 +133,7 @@ void DB_destroy(Database *db){
 void DB_insert(Database *db, char *key, uint8_t *data, size_t size){
     //create and store record file
     Record *rec = Record_create(key, data, size);         
-    Meta metadata; 
+    Meta metadata;  //to be filled by Record_store
     Record_store(db, rec, &metadata);
     Record_free(rec);
 
@@ -138,11 +142,7 @@ void DB_insert(Database *db, char *key, uint8_t *data, size_t size){
 }
 
 Record *DB_search(Database *db, char *key){
-    Meta *metadata = Metadata_retrieve(db->keyDir, key);
-    fseek(db->datafile.reader, metadata->RecordPos, SEEK_SET);
-    
-    Record *rec = malloc(sizeof(Record));
-    fread(rec, metadata->RecordSize, 1, db->datafile.reader);
-
-    return rec;
+    //fseek(db->datafile.reader, metadata->RecordPos, SEEK_SET);
+    //fread(rec, metadata->RecordSize, 1, db->datafile.reader);
+    return Record_load(db, key);
 }
