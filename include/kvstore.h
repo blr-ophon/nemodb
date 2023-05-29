@@ -25,7 +25,7 @@ typedef struct record{
 
 Record *Record_create(char *key, uint8_t *val, size_t n);
 
-void Record_destroy(Record *rec);
+void Record_free(Record *rec);
 
 void Record_store(struct database *db, Record *rec, struct meta *meta);
 

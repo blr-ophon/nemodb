@@ -19,13 +19,13 @@ Record *Record_create(char *key, uint8_t *val, size_t n){
     return rec;
 }
 
-void Record_destroy(Record *rec){
+void Record_free(Record *rec){
     free(rec->key);
     free(rec->value);
     free(rec);
 }
 
-//store record in datafile
+//store record in datafile, fills metadata with info on how it was stored
 void Record_store(Database *db, Record *rec, Meta *meta){
     size_t size = sizeof(Record) + rec->header.Ksize + rec->header.Vsize;
     fseek(db->datafile.reader, 0, SEEK_END);

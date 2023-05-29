@@ -11,7 +11,7 @@
 struct record;
 
 typedef struct meta{
-    uint32_t  Timestamp; 
+    uint32_t Timestamp; 
     uint32_t RecordSize;  
     uint32_t RecordPos;    
     uint32_t FileID;        
@@ -30,12 +30,19 @@ typedef struct htable{
     HT_entry **entries; //array of pointers to entries
 }HTable;
 
+////////////////////////////////////////////////////////////////////////////////
 
+//append metadata to file
 void Metadata_append(FILE *f, struct record *rec, Meta *metadata);
 
-uint32_t Metadata_getOffset(char *key);
+//retrieves metadata for a given key 
+Meta *Metadata_retrieve(HTable *keyDir, char *key);
 
+//load all metadata from file
 HTable *Metadata_load(FILE *f);
+
+////////////////////////////////////////////////////////////////////////////////
+
 
 //hash function
 

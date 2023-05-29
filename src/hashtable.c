@@ -4,14 +4,16 @@
 #define MAX_NAME 128
 
 void Metadata_append(FILE *f, Record *rec, Meta *metadata){
-    //generate metadata from record
-
-
     //4 bytes of key length / K_len bytes of key / sizeof(Meta) bytes of Meta
     uint32_t K_len = rec->header.Ksize;
     fwrite(&K_len, sizeof(uint32_t), 1, f);
     fwrite(&rec->key, K_len, 1, f);
     fwrite(metadata, sizeof(Meta), 1, f);   
+}
+
+Meta *Metadata_retrieve(HTable *keyDir, char *key){
+    HT_entry *entry = ht_search(keyDir, key);
+    return &entry->val;
 }
 
 HTable *Metadata_load(FILE *f){
