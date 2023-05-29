@@ -23,20 +23,23 @@ static void ferror_check(FILE *f, int rv){
 }
 
 void Metadata_append(FILE *f, Record *rec, Meta *metadata){
-    uint32_t K_len = rec->header.Ksize;
+    //move cursor
+    fseek(f, 0, SEEK_END);
 
     //append key lenght
+    uint32_t K_len = rec->header.Ksize;
     int rv = fwrite(&K_len, sizeof(uint32_t), 1, f);
     ferror_check(f, rv);
 
     //append key 
-    rv = fwrite(&rec->key, K_len, 1, f);
+    fseek(f, rv, SEEK_CUR);
+    rv = fwrite(rec->key, sizeof(char), K_len, f);
     ferror_check(f, rv);
 
     //append metadata
+    fseek(f, rv, SEEK_CUR);
     rv = fwrite(metadata, sizeof(Meta), 1, f);   
     ferror_check(f, rv);
-
     fflush(f);
 }
 
@@ -46,18 +49,18 @@ Meta *Metadata_retrieve(HTable *keyDir, char *key){
 }
 
 HTable *Metadata_load(FILE *f){
-    //get number of entries
+    HTable *table = ht_createTable(TABLE_SIZE);
+
+    //test for empty indexfile
     fseek(f, 0, SEEK_END);
-    int flength = ftell(f)/sizeof(Meta);
+    uint32_t flength = ftell(f)/sizeof(Meta);
+    if(flength < sizeof(Meta)){
+        return table;
+    }
+
+    //read all entries from indexfile to hashtable
     rewind(f);
-
-    //create table
-    int table_size = 3*flength;
-    if(flength < TABLE_SIZE) table_size = TABLE_SIZE;
-    HTable *table = ht_createTable(table_size);
-
-    //load into Hashtable
-    for(int i = 0; i < flength; i++){
+    while(!feof(f)){
         Meta *metadata = malloc(sizeof(Meta));
 
         //read key length

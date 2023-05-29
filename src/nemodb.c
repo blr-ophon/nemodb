@@ -20,7 +20,6 @@ int main(void){
     uint8_t data[7] = {1,2,3,4,5,6,7};
     DB_insert(db, "testkey", data, 7);
 
-
     Record *rec = DB_search(db, "testkey");
 
     for(uint32_t i = 0; i < rec->header.Vsize; i++){
@@ -131,6 +130,11 @@ void DB_destroy(Database *db){
 }
 
 void DB_insert(Database *db, char *key, uint8_t *data, size_t size){
+    if(ht_search(db->keyDir, key)){
+        //TODO: delete previous entry in hashmap and indexfile
+        return;
+    }
+    
     //create and store record file
     Record *rec = Record_create(key, data, size);         
     Meta metadata;  //to be filled by Record_store
@@ -142,6 +146,7 @@ void DB_insert(Database *db, char *key, uint8_t *data, size_t size){
     //store in hashmap
     ht_insert(db->keyDir, key, &metadata);
     fflush(db->datafile.writer);
+    fflush(db->indexfile.writer);
 
     Record_free(rec);
 }
