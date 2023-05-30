@@ -6,10 +6,11 @@ INCLUDES= -I./include
 
 SRC_DIR := ./src
 BUILD_DIR := ./build
+BIN_DIR := ./bin
 
 CFILES := $(shell find $(SRC_DIR) -name '*.c')
 OBJECTS := $(CFILES:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
-EXEC := ./bin/kvsdb
+EXEC := ${BIN_DIR}/kvsdb
 
 ${EXEC}: ${OBJECTS} ${LIBHHL} 
 	mkdir -p $(dir $@)
@@ -20,8 +21,8 @@ ${BUILD_DIR}/%.o: ${SRC_DIR}/%.c
 	$(CC) ${CFLAGS} ${INCLUDES} -c $< -o $@ 
 
 clean:
-	rm -rf ${OBJECTS} 
-	rm -rf ${EXEC}
+	rm -rf ${BUILD_DIR} 
+	rm -rf ${BIN_DIR} 
 
 run: ${EXEC}
 	$^ 
