@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <pthread.h>
 
+//Record file strucure:
+//Header - key - value
+
 struct database;
 struct meta;
 
@@ -24,11 +27,11 @@ typedef struct record{
 
 
 Record *Record_create(char *key, uint8_t *val, size_t n);
-
 void Record_free(Record *rec);
 
-void Record_store(struct database *db, Record *rec, struct meta *meta);
+int Record_store(struct database *db, Record *rec, struct meta *meta);
+Record *Record_load(struct database *db, uint32_t offset);
 
-Record *Record_load(struct database *db, char *key);
+int ferror_check(FILE *f, int rv);
 
 #endif

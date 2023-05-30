@@ -4,11 +4,35 @@
 #include <stdio.h>
 #include "nemodb.h"
 
-//TODO: check errno for system calls
-
 #define MAX_PATHNAME 64
 #define MAX_KEYNAME 64
 #define DB_BASEDIR "./databases"
+
+//API usage (cli interface):
+//  -nemodb is executed and has a cli interface
+//  -the interface allows normal database operations
+//  -the database server is started via interface
+//
+//API usage (c library):
+//  -User starts a connection with database through a given port
+//  -the server validates the user through TLS
+//  -After validation, CRUD operations are allowed
+//  -server is concurrent
+//
+//Structures:
+//  -Record and Metadata are independent of each other except when
+//      metadata is generated in record insertion
+//  -The database uses metadata to fill its hashtable and to append
+//      new entries after a new record insertion
+//  -The database uses Record in CRUD operations
+//  -Both DB and Metadata have access to hashtable functions
+//      
+//TODO: check errno for all system calls
+//TODO: DB functions error handling
+//      -define errno constants
+//      -all db calls must return 0
+//      -one function prints the interpretation of errors
+
 
 int main(void){
     DB_create("test_db");
@@ -102,9 +126,10 @@ Database *DB_load(char *dbname){
     database->indexfile.id = 0;  //TODO
     database->indexfile.offset = 0;  //TODO
     database->indexfile.reader = fopen(metafile, "rb");
+    //ferror_check(database->indexfile.reader);
     database->indexfile.writer = fopen(metafile, "ab");
     //TODO: check fopen errno
-    database->keyDir = Metadata_load(database->indexfile.reader);
+    database->keyDir = Indexfile_load(database->indexfile.reader);
 
     //LOAD DATAFILE
     
@@ -140,19 +165,23 @@ void DB_destroy(Database *db){
     DB_free(db);
 }
 
-void DB_insert(Database *db, char *key, uint8_t *data, size_t size){
+int DB_insert(Database *db, char *key, uint8_t *data, size_t size){
     if(ht_search(db->keyDir, key)){
         //TODO: delete previous entry in hashmap and indexfile
-        return;
+        printf("Record found for given key\n");
+        return -1;
     }
     
     //create and store record file
     Record *rec = Record_create(key, data, size);         
     Meta metadata;  //to be filled by Record_store
-    Record_store(db, rec, &metadata);
+    if(Record_store(db, rec, &metadata) < 0){
+        printf("Record store failure\n");
+        return -1;
+    }
 
     //append to indexfile 
-    Metadata_append(db->indexfile.writer, rec, &metadata);
+    Indexfile_append(db->indexfile.writer, rec, &metadata);
 
     //store in hashmap
     ht_insert(db->keyDir, key, &metadata);
@@ -160,11 +189,22 @@ void DB_insert(Database *db, char *key, uint8_t *data, size_t size){
     fflush(db->indexfile.writer);
 
     Record_free(rec);
+    return 0;
 }
 
 Record *DB_search(Database *db, char *key){
-    //fseek(db->datafile.reader, metadata->RecordPos, SEEK_SET);
-    //fread(rec, metadata->RecordSize, 1, db->datafile.reader);
     fflush(db->datafile.reader);
-    return Record_load(db, key);
+
+    Meta *metadata = ht_retrieveVal(db->keyDir, key);
+    printf("Metadata(%u(id) | %u(pos) | %u(size) | %u(ts))\n",
+            metadata->FileID,
+            metadata->RecordPos,
+            metadata->RecordSize,
+            metadata->Timestamp
+          );
+
+
+    Record *rec = Record_load(db, metadata->RecordPos);
+
+    return rec;
 }

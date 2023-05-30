@@ -8,21 +8,7 @@
 //to insert an item. Duplicate the size but keep the same hashes for
 //the previous values
 
-static void ferror_check(FILE *f, int rv){
-    if (rv ==  0) {
-        if (feof(f)) {
-            fprintf(stderr, "Error: Reached end of file.\n");
-        } else if (ferror(f)) {
-            perror("Error reading from file");
-        } else {
-            fprintf(stderr, "Unknown error occurred during file read.\n");
-        }
-        fclose(f);
-        exit(1);
-    }
-}
-
-void Metadata_append(FILE *f, Record *rec, Meta *metadata){
+void Indexfile_append(FILE *f, Record *rec, Meta *metadata){
     //move cursor
     fseek(f, 0, SEEK_END);
 
@@ -41,12 +27,7 @@ void Metadata_append(FILE *f, Record *rec, Meta *metadata){
     fflush(f);
 }
 
-Meta *Metadata_retrieve(HTable *keyDir, char *key){
-    HT_entry *entry = ht_search(keyDir, key);
-    return &entry->val;
-}
-
-HTable *Metadata_load(FILE *f){
+HTable *Indexfile_load(FILE *f){
     HTable *table = ht_createTable(TABLE_SIZE);
 
     //test for empty indexfile
@@ -205,6 +186,12 @@ HT_entry *ht_search(HTable *table, char *key){
 
     return NULL;
 }
+
+Meta *ht_retrieveVal(HTable *table, char *key){
+    HT_entry *entry = ht_search(table, key);
+    return &entry->val;
+}
+
 
 HT_entry *ht_createEntry(char *key, Meta *val){
     HT_entry *entry = malloc(sizeof(HT_entry));

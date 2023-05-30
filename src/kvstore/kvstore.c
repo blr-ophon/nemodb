@@ -2,7 +2,7 @@
 #include "hashtable.h"
 #include "nemodb.h"
 
-static void ferror_check(FILE *f, int rv){
+int ferror_check(FILE *f, int rv){
     if (rv ==  0) {
         if (feof(f)) {
             fprintf(stderr, "Error: Reached end of file.\n");
@@ -12,8 +12,9 @@ static void ferror_check(FILE *f, int rv){
             fprintf(stderr, "Unknown error occurred during file read.\n");
         }
         fclose(f);
-        exit(1);
+        return -1;
     }
+    return 0;
 }
 
 Record *Record_create(char *key, uint8_t *val, size_t n){
@@ -34,13 +35,13 @@ Record *Record_create(char *key, uint8_t *val, size_t n){
 }
 
 void Record_free(Record *rec){
-    free(rec->key);
-    free(rec->value);
-    free(rec);
+    if(rec->key)    free(rec->key);
+    if(rec->value)  free(rec->value);
+    if(rec)         free(rec);
 }
 
 //store record in datafile, meta receives info on how the record was stored
-void Record_store(Database *db, Record *rec, Meta *meta){
+int Record_store(Database *db, Record *rec, Meta *meta){
     //APPEND RECORD TO DATAFILE
     
     //set cursor
@@ -49,14 +50,19 @@ void Record_store(Database *db, Record *rec, Meta *meta){
     uint32_t fpos = ftell(db->datafile.writer);
 
     //write header, key and value in order
-    fwrite(&rec->header, sizeof(RecHeader), 1, db->datafile.writer);
-
-    for(uint32_t i = 0; i < rec->header.Ksize; i++){
-        fwrite(&rec->key[i], 1, 1, db->datafile.writer);
+    int rv = fwrite(&rec->header, sizeof(RecHeader), 1, db->datafile.writer);
+    if(ferror_check(db->datafile.writer, rv) < 0){
+        return -1;
     }
 
-    for(uint32_t i = 0; i < rec->header.Vsize; i++){
-        fwrite(&rec->value[i], 1, 1, db->datafile.writer);
+    rv = fwrite(rec->key, sizeof(char), rec->header.Ksize, db->datafile.writer);
+    if(ferror_check(db->datafile.writer, rv) < 0){
+        return -1;
+    }
+
+    rv = fwrite(rec->value, sizeof(uint8_t), rec->header.Vsize, db->datafile.writer);
+    if(ferror_check(db->datafile.writer, rv) < 0){
+        return -1;
     }
 
     //create metadata
@@ -64,28 +70,24 @@ void Record_store(Database *db, Record *rec, Meta *meta){
     meta->RecordSize = size;
     meta->RecordPos = fpos;
     meta->Timestamp = rec->header.timestamp;        
+    return 0;
 }
 
 
 //load record from datafile
-Record *Record_load(Database *db, char *key){
-    Record *rec = (Record*) malloc(sizeof(Record));
-
-    Meta *metadata = Metadata_retrieve(db->keyDir, key);
-    printf("Metadata(%u(id) | %u(pos) | %u(size) | %u(ts))\n",
-            metadata->FileID,
-            metadata->RecordPos,
-            metadata->RecordSize,
-            metadata->Timestamp
-          );
+Record *Record_load(Database *db, uint32_t offset){
+    Record *rec = (Record*) calloc(1, sizeof(Record));
 
     //set cursor
-    fseek(db->datafile.reader, metadata->RecordPos, SEEK_SET);
+    fseek(db->datafile.reader, offset, SEEK_SET);
     printf("FTELL: %li\n", ftell(db->datafile.reader));
 
-    //read header, key and value in order
+    //read header
     int rv = fread(&rec->header, sizeof(RecHeader), 1, db->datafile.reader);
-    ferror_check(db->datafile.reader, rv);
+    if(ferror_check(db->datafile.reader, rv) < 0){
+        Record_free(rec);
+        return NULL;
+    }
     printf("Header(%u(cs) | %u(ex) | %u(ts) | %u(ksize) | %u(vsize))\n",
             rec->header.checksum,
             rec->header.expiry,
@@ -94,14 +96,20 @@ Record *Record_load(Database *db, char *key){
             rec->header.Vsize
           );
 
+    //read key
     rec->key = calloc(1, rec->header.Ksize + 1);
-    for(uint32_t i = 0; i < rec->header.Ksize; i++){
-        fread(&rec->key[i], 1, 1, db->datafile.reader);
+    rv = fread(rec->key, sizeof(char), rec->header.Ksize, db->datafile.reader);
+    if(ferror_check(db->datafile.reader, rv) < 0){
+        Record_free(rec);
+        return NULL;
     }
 
+    //read value
     rec->value = calloc(1, rec->header.Vsize);
-    for(uint32_t i = 0; i < rec->header.Vsize; i++){
-        fread(&rec->value[i], 1, 1, db->datafile.reader);
+    rv = fread(rec->value, sizeof(uint8_t), rec->header.Vsize, db->datafile.reader);
+    if(ferror_check(db->datafile.reader, rv) < 0){
+        Record_free(rec);
+        return NULL;
     }
     return rec;
 }

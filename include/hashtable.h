@@ -6,7 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-//TODO: change name to metadata
+
+//TODO: change filename to indexlist
+
+//Index file strucure:
+//Key length - key - metadata
 
 struct record;
 
@@ -33,13 +37,10 @@ typedef struct htable{
 ////////////////////////////////////////////////////////////////////////////////
 
 //append metadata to file
-void Metadata_append(FILE *f, struct record *rec, Meta *metadata);
-
-//retrieves metadata for a given key 
-Meta *Metadata_retrieve(HTable *keyDir, char *key);
+void Indexfile_append(FILE *f, struct record *rec, Meta *metadata);
 
 //load all metadata from file
-HTable *Metadata_load(FILE *f);
+HTable *Indexfile_load(FILE *f);
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -51,6 +52,8 @@ uint32_t ht_djb2(char *key, uint32_t table_size);
 uint32_t ht_hash(char *key, int attempts, size_t table_size);
 
 //search/insert/delete/print
+
+Meta *ht_retrieveVal(HTable *table, char *key);
 
 HT_entry *ht_search(HTable *table, char *key);
 
