@@ -15,6 +15,7 @@ int main(void){
     Database *db = DB_load("test_db");
     if(!db){
         printf("database not found");
+        return -1;
     }
 
     uint8_t data1[7] = {1,2,3,4,5,6,7};
