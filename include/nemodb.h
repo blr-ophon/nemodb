@@ -30,8 +30,8 @@ Database *DB_load(char *dbname);
 void DB_free(Database *db);
 void DB_destroy(Database *db);
 
-int DB_insert(Database *db, char *key, uint8_t *data, size_t size);
-Record *DB_search(Database *db, char *key);
+int DB_Insert(Database *db, char *key, uint8_t *data, size_t size);
+Record *DB_Read(Database *db, char *key);
 void DB_delete(char *key);
 
 #endif

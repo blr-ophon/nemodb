@@ -43,19 +43,19 @@ int main(void){
     }
 
     uint8_t data1[7] = {1,2,3,4,5,6,7};
-    DB_insert(db, "testkey1", data1, 7);
+    DB_Insert(db, "testkey1", data1, 7);
 
     uint8_t data2[7] = {7,6,5,4,3,2,1};
-    DB_insert(db, "testkey2", data2, 7);
+    DB_Insert(db, "testkey2", data2, 7);
 
 
-    Record *rec = DB_search(db, "testkey1");
+    Record *rec = DB_Read(db, "testkey1");
     for(uint32_t i = 0; i < rec->header.Vsize; i++){
         printf("%d ", rec->value[i]);
     }
     printf("\n"); 
 
-    rec = DB_search(db, "testkey2");
+    rec = DB_Read(db, "testkey2");
     for(uint32_t i = 0; i < rec->header.Vsize; i++){
         printf("%d ", rec->value[i]);
     }
@@ -142,6 +142,15 @@ Database *DB_load(char *dbname){
     return database;
 }
 
+void DB_merge(Database *db){
+    //create new temporary indexfile
+    //Load indexfile to hashtable
+    //Store from hashtable to temp indexfile
+    //Change temp indexfile name to overwrite previous one
+    //(what about datafile)
+    //Updata db datafile handlers
+}
+
 void DB_free(Database *db){
     ht_freeTable(db->keyDir);
     fclose(db->datafile.reader);
@@ -165,7 +174,7 @@ void DB_destroy(Database *db){
     DB_free(db);
 }
 
-int DB_insert(Database *db, char *key, uint8_t *data, size_t size){
+int DB_Insert(Database *db, char *key, uint8_t *data, size_t size){
     if(ht_search(db->keyDir, key)){
         //TODO: delete previous entry in hashmap and indexfile
         printf("Record found for given key\n");
@@ -192,7 +201,7 @@ int DB_insert(Database *db, char *key, uint8_t *data, size_t size){
     return 0;
 }
 
-Record *DB_search(Database *db, char *key){
+Record *DB_Read(Database *db, char *key){
     fflush(db->datafile.reader);
 
     Meta *metadata = ht_retrieveVal(db->keyDir, key);
